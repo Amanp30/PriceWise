@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PriceWise - Smart Deal Calculator</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+  
+  * {
+    font-family: 'Inter', sans-serif;
+  }
+  
+  body {
+    background: #fafafa;
+  }
+  
+  .input-minimal {
+    transition: all 0.2s ease;
+  }
+  
+  .input-minimal:focus {
+    outline: none;
+    border-color: #000;
+  }
+  
+  .card-minimal {
+    transition: all 0.3s ease;
+  }
+  
+  .card-minimal:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.06);
+  }
+  
+  .btn-minimal {
+    transition: all 0.2s ease;
+  }
+  
+  .btn-minimal:hover {
+    transform: scale(1.01);
+    background: #000;
+  }
+</style>
+</head>
+<body class="min-h-screen p-6 md:p-12">
+
+<div class="max-w-5xl mx-auto">
+  
+  <!-- Header -->
+  <div class="mb-12">
+    <h1 class="text-4xl md:text-5xl font-light text-gray-900 mb-2">PriceWise</h1>
+    <p class="text-gray-500 font-light">Calculate effective pricing</p>
+  </div>
+
+  <!-- Main Calculator -->
+  <div class="bg-white rounded-lg border border-gray-200 p-8 md:p-10 mb-8">
+    
+    <!-- Prices Input -->
+    <div class="mb-10">
+      <label class="block text-sm font-medium text-gray-900 mb-3">Product Prices</label>
+      <input 
+        id="prices" 
+        type="text" 
+        class="w-full border border-gray-300 rounded px-4 py-3 text-gray-900 input-minimal" 
+        placeholder="5000, 4000, 6000">
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-8 mb-10">
+      
+      <!-- Discount -->
+      <div>
+        <h2 class="text-lg font-medium text-gray-900 mb-4">Discount</h2>
+        
+        <div class="mb-4">
+          <select id="discountType" class="w-full border border-gray-300 rounded px-4 py-3 text-gray-900 input-minimal bg-white">
+            <option value="none">No Discount</option>
+            <option value="percent">Percentage</option>
+            <option value="upto">Percentage (Capped)</option>
+          </select>
+        </div>
+        
+        <div id="discountInputsContainer" class="space-y-4"></div>
+      </div>
+
+      <!-- Cashback -->
+      <div>
+        <h2 class="text-lg font-medium text-gray-900 mb-4">Cashback</h2>
+        
+        <div class="mb-4">
+          <select id="cashbackType" class="w-full border border-gray-300 rounded px-4 py-3 text-gray-900 input-minimal bg-white">
+            <option value="none">No Cashback</option>
+            <option value="fixed">Fixed Amount</option>
+            <option value="percent">Percentage (Capped)</option>
+          </select>
+        </div>
+        
+        <div id="cashbackInputsContainer" class="space-y-4"></div>
+      </div>
+    </div>
+
+    <!-- Calculate Button -->
+    <button 
+      onclick="calculateAll()" 
+      class="w-full bg-gray-900 text-white font-medium py-4 rounded btn-minimal">
+      Calculate
+    </button>
+  </div>
+
+  <!-- Results -->
+  <div id="resultCards" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+</div>
+
+<script>
+const discountType = document.getElementById('discountType');
+const discountContainer = document.getElementById('discountInputsContainer');
+const cashbackType = document.getElementById('cashbackType');
+const cashbackContainer = document.getElementById('cashbackInputsContainer');
+
+function renderDiscountInputs() {
+  const type = discountType.value;
+  discountContainer.innerHTML = '';
+  
+  if(type === 'percent') {
+    discountContainer.innerHTML = `
+      <input id="discountPercent" type="number" class="w-full border border-gray-300 rounded px-4 py-3 text-gray-900 input-minimal" placeholder="Discount %" min="0" max="100">`;
+  } else if(type === 'upto') {
+    discountContainer.innerHTML = `
+      <input id="discountPercent" type="number" class="w-full border border-gray-300 rounded px-4 py-3 text-gray-900 input-minimal" placeholder="Discount %" min="0" max="100">
+      <input id="discountMax" type="number" class="w-full border border-gray-300 rounded px-4 py-3 text-gray-900 input-minimal" placeholder="Max Discount ₹" min="0">`;
+  }
+}
+
+function renderCashbackInputs() {
+  const type = cashbackType.value;
+  cashbackContainer.innerHTML = '';
+  
+  if(type === 'fixed') {
+    cashbackContainer.innerHTML = `
+      <input id="fixedCashback" type="number" class="w-full border border-gray-300 rounded px-4 py-3 text-gray-900 input-minimal" placeholder="Cashback ₹" min="0">`;
+  } else if(type === 'percent') {
+    cashbackContainer.innerHTML = `
+      <input id="cashbackPercent" type="number" class="w-full border border-gray-300 rounded px-4 py-3 text-gray-900 input-minimal" placeholder="Cashback %" min="0" max="100">
+      <input id="cashbackMax" type="number" class="w-full border border-gray-300 rounded px-4 py-3 text-gray-900 input-minimal" placeholder="Max Cashback ₹" min="0">`;
+  }
+}
+
+discountType.addEventListener('change', renderDiscountInputs);
+cashbackType.addEventListener('change', renderCashbackInputs);
+
+function calculatePrice(price) {
+  price = parseFloat(price);
+  if(!price || price <= 0) return null;
+
+  let discountAmount = 0, priceAfterDiscount = price, cashbackAmount = 0;
+
+  const dType = discountType.value;
+  if(dType !== 'none') {
+    const dPercent = parseFloat(document.getElementById('discountPercent')?.value) || 0;
+    discountAmount = price * (dPercent/100);
+    if(dType === 'upto') {
+      const dMax = parseFloat(document.getElementById('discountMax')?.value) || 0;
+      if(discountAmount > dMax) discountAmount = dMax;
+    }
+    priceAfterDiscount = price - discountAmount;
+  }
+
+  const cType = cashbackType.value;
+  if(cType === 'fixed') {
+    cashbackAmount = parseFloat(document.getElementById('fixedCashback')?.value) || 0;
+  } else if(cType === 'percent') {
+    const cPercent = parseFloat(document.getElementById('cashbackPercent')?.value) || 0;
+    cashbackAmount = priceAfterDiscount * (cPercent/100);
+    const cMax = parseFloat(document.getElementById('cashbackMax')?.value) || 0;
+    if(cashbackAmount > cMax) cashbackAmount = cMax;
+  }
+
+  const finalPayable = priceAfterDiscount;
+  const effectivePrice = priceAfterDiscount - cashbackAmount;
+  const totalSavings = price - effectivePrice;
+
+  return { price, discountAmount, priceAfterDiscount, cashbackAmount, finalPayable, effectivePrice, totalSavings };
+}
+
+function calculateAll() {
+  const priceText = document.getElementById('prices').value;
+  const prices = priceText.split(',').map(p=>p.trim()).filter(p=>p);
+  const container = document.getElementById('resultCards');
+  container.innerHTML = '';
+
+  if(prices.length === 0) {
+    return;
+  }
+
+  prices.forEach((p, index) => {
+    const res = calculatePrice(p);
+    if(res) {
+      const card = document.createElement('div');
+      card.className = 'bg-white rounded-lg border border-gray-200 p-6 card-minimal';
+      card.innerHTML = `
+        <div class="mb-6">
+          <div class="text-sm text-gray-500 mb-1">Product ${index + 1}</div>
+          <div class="text-3xl font-light text-gray-900">₹${res.price.toLocaleString('en-IN', {maximumFractionDigits: 0})}</div>
+        </div>
+        
+        <div class="space-y-3 mb-6">
+          ${res.discountAmount > 0 ? `
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-600">Discount</span>
+            <span class="text-gray-900">−₹${res.discountAmount.toLocaleString('en-IN', {maximumFractionDigits: 0})}</span>
+          </div>
+          ` : ''}
+          
+          ${res.cashbackAmount > 0 ? `
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-600">Cashback</span>
+            <span class="text-gray-900">−₹${res.cashbackAmount.toLocaleString('en-IN', {maximumFractionDigits: 0})}</span>
+          </div>
+          ` : ''}
+        </div>
+        
+        <div class="border-t border-gray-200 pt-4 space-y-3">
+          <div class="flex justify-between">
+            <span class="text-sm text-gray-600">Final Payable</span>
+            <span class="text-lg font-medium text-gray-900">₹${res.finalPayable.toLocaleString('en-IN', {maximumFractionDigits: 0})}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-sm text-gray-600">Effective Price</span>
+            <span class="text-lg font-medium text-gray-900">₹${res.effectivePrice.toLocaleString('en-IN', {maximumFractionDigits: 0})}</span>
+          </div>
+          ${res.totalSavings > 0 ? `
+          <div class="flex justify-between pt-2 border-t border-gray-100">
+            <span class="text-sm text-gray-500">You Save</span>
+            <span class="text-sm font-medium text-gray-900">₹${res.totalSavings.toLocaleString('en-IN', {maximumFractionDigits: 0})}</span>
+          </div>
+          ` : ''}
+        </div>
+      `;
+      container.appendChild(card);
+    }
+  });
+}
+</script>
+</body>
+</html>
