@@ -108,8 +108,34 @@
     </button>
   </div>
 
-  <!-- Results -->
+  <!-- View Toggle -->
+  <div id="viewToggle" class="hidden mb-6 flex gap-2">
+    <button onclick="switchView('cards')" id="cardsBtn" class="px-4 py-2 rounded bg-gray-900 text-white text-sm font-medium">Cards</button>
+    <button onclick="switchView('table')" id="tableBtn" class="px-4 py-2 rounded bg-white border border-gray-300 text-gray-900 text-sm font-medium">Table</button>
+  </div>
+
+  <!-- Results Cards -->
   <div id="resultCards" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+
+  <!-- Results Table -->
+  <div id="resultTable" class="hidden bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full">
+        <thead class="bg-gray-50 border-b border-gray-200">
+          <tr>
+            <th class="px-6 py-3 text-left text-sm font-medium text-gray-900">Product</th>
+            <th class="px-6 py-3 text-right text-sm font-medium text-gray-900">Original Price</th>
+            <th class="px-6 py-3 text-right text-sm font-medium text-gray-900">Discount</th>
+            <th class="px-6 py-3 text-right text-sm font-medium text-gray-900">Cashback</th>
+            <th class="px-6 py-3 text-right text-sm font-medium text-gray-900">Final Payable</th>
+            <th class="px-6 py-3 text-right text-sm font-medium text-gray-900">Effective Price</th>
+            <th class="px-6 py-3 text-right text-sm font-medium text-gray-900">Total Savings</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -124,11 +150,29 @@ function renderDiscountInputs() {
   
   if(type === 'percent') {
     discountContainer.innerHTML = `
-      <input id="discountPercent" type="number" class="w-full border border-gray-300 rounded px-4 py-3 text-gray-900 input-minimal" placeholder="Discount %" min="0" max="100">`;
+      <div>
+        <label class="block text-sm font-medium text-gray-900 mb-2">Discount Percentage</label>
+        <div class="relative">
+          <input id="discountPercent" type="number" class="w-full border border-gray-300 rounded px-4 py-3 pr-10 text-gray-900 input-minimal" placeholder="10" min="0" max="100">
+          <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">%</span>
+        </div>
+      </div>`;
   } else if(type === 'upto') {
     discountContainer.innerHTML = `
-      <input id="discountPercent" type="number" class="w-full border border-gray-300 rounded px-4 py-3 text-gray-900 input-minimal" placeholder="Discount %" min="0" max="100">
-      <input id="discountMax" type="number" class="w-full border border-gray-300 rounded px-4 py-3 text-gray-900 input-minimal" placeholder="Max Discount ₹" min="0">`;
+      <div>
+        <label class="block text-sm font-medium text-gray-900 mb-2">Discount Percentage</label>
+        <div class="relative">
+          <input id="discountPercent" type="number" class="w-full border border-gray-300 rounded px-4 py-3 pr-10 text-gray-900 input-minimal" placeholder="10" min="0" max="100">
+          <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">%</span>
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-900 mb-2">Maximum Discount</label>
+        <div class="relative">
+          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">₹</span>
+          <input id="discountMax" type="number" class="w-full border border-gray-300 rounded px-4 py-3 pl-8 text-gray-900 input-minimal" placeholder="300" min="0">
+        </div>
+      </div>`;
   }
 }
 
@@ -138,11 +182,29 @@ function renderCashbackInputs() {
   
   if(type === 'fixed') {
     cashbackContainer.innerHTML = `
-      <input id="fixedCashback" type="number" class="w-full border border-gray-300 rounded px-4 py-3 text-gray-900 input-minimal" placeholder="Cashback ₹" min="0">`;
+      <div>
+        <label class="block text-sm font-medium text-gray-900 mb-2">Cashback Amount</label>
+        <div class="relative">
+          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">₹</span>
+          <input id="fixedCashback" type="number" class="w-full border border-gray-300 rounded px-4 py-3 pl-8 text-gray-900 input-minimal" placeholder="100" min="0">
+        </div>
+      </div>`;
   } else if(type === 'percent') {
     cashbackContainer.innerHTML = `
-      <input id="cashbackPercent" type="number" class="w-full border border-gray-300 rounded px-4 py-3 text-gray-900 input-minimal" placeholder="Cashback %" min="0" max="100">
-      <input id="cashbackMax" type="number" class="w-full border border-gray-300 rounded px-4 py-3 text-gray-900 input-minimal" placeholder="Max Cashback ₹" min="0">`;
+      <div>
+        <label class="block text-sm font-medium text-gray-900 mb-2">Cashback Percentage</label>
+        <div class="relative">
+          <input id="cashbackPercent" type="number" class="w-full border border-gray-300 rounded px-4 py-3 pr-10 text-gray-900 input-minimal" placeholder="5" min="0" max="100">
+          <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500">%</span>
+        </div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-900 mb-2">Maximum Cashback</label>
+        <div class="relative">
+          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">₹</span>
+          <input id="cashbackMax" type="number" class="w-full border border-gray-300 rounded px-4 py-3 pl-8 text-gray-900 input-minimal" placeholder="300" min="0">
+        </div>
+      </div>`;
   }
 }
 
@@ -179,23 +241,35 @@ function calculatePrice(price) {
   const finalPayable = priceAfterDiscount;
   const effectivePrice = priceAfterDiscount - cashbackAmount;
   const totalSavings = price - effectivePrice;
+  const savingsPercent = price > 0 ? ((totalSavings / price) * 100) : 0;
 
-  return { price, discountAmount, priceAfterDiscount, cashbackAmount, finalPayable, effectivePrice, totalSavings };
+  return { price, discountAmount, priceAfterDiscount, cashbackAmount, finalPayable, effectivePrice, totalSavings, savingsPercent };
 }
 
 function calculateAll() {
   const priceText = document.getElementById('prices').value;
   const prices = priceText.split(',').map(p=>p.trim()).filter(p=>p);
   const container = document.getElementById('resultCards');
+  const tableBody = document.getElementById('tableBody');
+  const viewToggle = document.getElementById('viewToggle');
+  
   container.innerHTML = '';
+  tableBody.innerHTML = '';
 
   if(prices.length === 0) {
+    viewToggle.classList.add('hidden');
     return;
   }
+
+  viewToggle.classList.remove('hidden');
+  const results = [];
 
   prices.forEach((p, index) => {
     const res = calculatePrice(p);
     if(res) {
+      results.push(res);
+      
+      // Card View
       const card = document.createElement('div');
       card.className = 'bg-white rounded-lg border border-gray-200 p-6 card-minimal';
       card.innerHTML = `
@@ -232,14 +306,54 @@ function calculateAll() {
           ${res.totalSavings > 0 ? `
           <div class="flex justify-between pt-2 border-t border-gray-100">
             <span class="text-sm text-gray-500">You Save</span>
-            <span class="text-sm font-medium text-gray-900">₹${res.totalSavings.toLocaleString('en-IN', {maximumFractionDigits: 0})}</span>
+            <span class="text-sm font-medium text-gray-900">₹${res.totalSavings.toLocaleString('en-IN', {maximumFractionDigits: 0})} (${res.savingsPercent.toFixed(1)}%)</span>
           </div>
           ` : ''}
         </div>
       `;
       container.appendChild(card);
+
+      // Table Row
+      const row = document.createElement('tr');
+      row.className = 'border-b border-gray-200 hover:bg-gray-50';
+      row.innerHTML = `
+        <td class="px-6 py-4 text-sm text-gray-900">Product ${index + 1}</td>
+        <td class="px-6 py-4 text-sm text-gray-900 text-right">₹${res.price.toLocaleString('en-IN', {maximumFractionDigits: 0})}</td>
+        <td class="px-6 py-4 text-sm text-gray-900 text-right">${res.discountAmount > 0 ? '−₹' + res.discountAmount.toLocaleString('en-IN', {maximumFractionDigits: 0}) : '—'}</td>
+        <td class="px-6 py-4 text-sm text-gray-900 text-right">${res.cashbackAmount > 0 ? '−₹' + res.cashbackAmount.toLocaleString('en-IN', {maximumFractionDigits: 0}) : '—'}</td>
+        <td class="px-6 py-4 text-sm font-medium text-gray-900 text-right">₹${res.finalPayable.toLocaleString('en-IN', {maximumFractionDigits: 0})}</td>
+        <td class="px-6 py-4 text-sm font-medium text-gray-900 text-right">₹${res.effectivePrice.toLocaleString('en-IN', {maximumFractionDigits: 0})}</td>
+        <td class="px-6 py-4 text-sm text-gray-900 text-right">${res.totalSavings > 0 ? '₹' + res.totalSavings.toLocaleString('en-IN', {maximumFractionDigits: 0}) + ' (' + res.savingsPercent.toFixed(1) + '%)' : '—'}</td>
+      `;
+      tableBody.appendChild(row);
     }
   });
+}
+
+let currentView = 'cards';
+
+function switchView(view) {
+  currentView = view;
+  const cardsContainer = document.getElementById('resultCards');
+  const tableContainer = document.getElementById('resultTable');
+  const cardsBtn = document.getElementById('cardsBtn');
+  const tableBtn = document.getElementById('tableBtn');
+
+  if(view === 'cards') {
+    cardsContainer.classList.remove('hidden');
+    tableContainer.classList.add('hidden');
+    cardsBtn.classList.add('bg-gray-900', 'text-white');
+    cardsBtn.classList.remove('bg-white', 'border', 'border-gray-300', 'text-gray-900');
+    tableBtn.classList.remove('bg-gray-900', 'text-white');
+    tableBtn.classList.add('bg-white', 'border', 'border-gray-300', 'text-gray-900');
+  } else {
+    cardsContainer.classList.add('hidden');
+    tableContainer.classList.remove('hidden');
+    tableBtn.classList.add('bg-gray-900', 'text-white');
+    tableBtn.classList.remove('bg-white', 'border', 'border-gray-300', 'text-gray-900');
+    cardsBtn.classList.remove('bg-gray-900', 'text-white');
+    cardsBtn.classList.add('bg-white', 'border', 'border-gray-300', 'text-gray-900');
+  }
 }
 </script>
 </body>
